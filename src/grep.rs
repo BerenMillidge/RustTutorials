@@ -14,18 +14,27 @@ struct Config {
 }
 // create parse config functino on the config struct/object
 impl Config {
-    fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
-        }
+    fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
+    	args.next();
+    	// skip the first argument
 
-        let query = args[1].clone();
-        let filename = args[2].clone();
+    	let query = match args.next() {
+    		Some(arg) => arg,
+    		None => return Err("DIdn't get a query string"),
+    	};
+    	let filename = match args.next() {
+    		Some(arg) => arg,
+    		None => return Err("DIdn't get a file name"),
+    	};
 
-        Ok(Config { query, filename })
-    }
+    	let case_sensitive = env::var("Case insensitive").is_err();
+
+    	Ok(Config {query, filename, case_sensitive})
+
+    	// uses the new iterator to get the config which makes sense and is awesome... but who knwos really!
+      
+	}
 }
-
 fn parse_config(args: &[String]) ->Config {
 	let query = args[1].clone();
 	let filename = args[2].clone();
@@ -60,6 +69,17 @@ pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
 	return results;
 }
 
+// can also rewrite this with iterators in a more clear - i.e. fucntional way
+pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+	contents.lines()
+		.filter(|line| line.contains(query))
+		.collect()
+}
+// that is reall quite simple once you know how to read the iterators!
+// iterators are a zero cost abstraction. They mostly get compiled away, so don't worry about using that
+// and to be honest, overoptimisation is the root of a lot of evil anyway, so it doesn't really matter!?
+
+
 fn main() {
 	let args: Vec<String> = env::args().collect();
 	println!("{:?}", args);
@@ -67,7 +87,7 @@ fn main() {
 	//let query = &args[1];
 	//let filename = &args[2]; // you don't want to take ownership of the arg sfunction here else future accesses won't work!
 	
-	let config = Config::new(&args).unwrap_or_else(|err| {
+	let config = Config::new(env::args()).unwrap_or_else(|err| {
         println!("Problem parsing arguments: {}", err);
         process::exit(1);
     });
