@@ -201,3 +201,9 @@ fn main() {
 // send marker trait indicates that ownership of type implementing send can be transferred between threads
 // almost every rust type is send!
 // sync is that the trait /object is thread safe, and so can be called at the same time from multiple traits!
+
+// so let's plan this out... threadpool has a queue of closures - god knows how to implement that
+// and has a transmitter which all the workers have receivers?
+// job struct will hold the closures to send down the channel
+// the execute method will send jon it wants to execute down the sending side
+// the worker will loop over the receiving side of the channel andexecutre any chobs it creates
